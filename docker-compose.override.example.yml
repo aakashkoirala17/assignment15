@@ -1,0 +1,38 @@
+# ==============================================================================
+# Enterprise AI Assistant - Docker Compose Local Development Override Example
+# Copy this file to docker-compose.override.yml:
+#   cp docker-compose.override.example.yml docker-compose.override.yml
+# ==============================================================================
+
+services:
+  backend:
+    # 1. Mount local code for live reload without rebuilding images
+    volumes:
+      - ./backend:/app/backend:ro
+      - ./docs:/app/docs:ro
+      - ./chroma_db:/app/chroma_db
+    # 2. Run uvicorn with --reload for instant developer feedback
+    command: ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    environment:
+      - DEBUG=true
+      - LLM_PROVIDER=mock
+
+  frontend:
+    # 1. Mount local frontend code for hot-reload
+    volumes:
+      - ./frontend:/app/frontend:ro
+    # 2. Streamlit live inspection settings
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_RUN_ON_SAVE=true
+
+  # Optional GPU enablement for vLLM container (if running vLLM inside docker)
+  # vllm:
+  #   image: vllm/vllm-openai:latest
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]

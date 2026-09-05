@@ -1,0 +1,29 @@
+# Git & IDE
+.git
+.gitignore
+.DS_Store
+.idea/
+.vscode/
+
+# Python Virtual Environments & Cache
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Local databases & model weights
+chroma_db/
+onnx_models/
+*.sqlite3
+:memory:.ses
+
+# PDFs & Docs (keep build context minimal)
+*.pdf
+*.log

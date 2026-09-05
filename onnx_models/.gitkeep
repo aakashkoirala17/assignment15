@@ -1,0 +1,2 @@
+# Preserve onnx_models directory in git.
+# Run 'python optimization/onnx_converter.py' to generate ONNX model weights.

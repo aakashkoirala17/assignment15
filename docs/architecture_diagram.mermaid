@@ -1,0 +1,52 @@
+graph TD
+    %% User and Client Tier
+    User([User / Browser])
+    APIClient([External API Clients])
+    
+    User -->|HTTP / WebSockets :8501| StreamlitUI["Streamlit Modern UI (frontend/app.py)<br/>• Chat & Tool Inspector<br/>• RAG Studio & Visualizer<br/>• JSON Schema Validator<br/>• ONNX & Reliability Dashboard"]
+    APIClient -->|REST & SSE Stream :8000| FastAPI["FastAPI High-Performance Backend (backend/app/main.py)"]
+    StreamlitUI -->|Async HTTP API| FastAPI
+
+    %% Middleware and Security Tier
+    subgraph "Edge & Traffic Control Tier"
+        FastAPI --> RateLimiter["Token-Bucket Rate Limiter (backend/app/core/rate_limiter.py)<br/>• 60 req/min + Burst<br/>• Client IP Tracking<br/>• X-RateLimit & Retry-After Headers"]
+        RateLimiter --> CacheEngine["Two-Tier Response Cache (backend/app/core/cache.py)<br/>• MD5 / SHA256 Request Normalization<br/>• In-Memory TTL LRU Cache<br/>• Redis Backed Distribution"]
+    end
+
+    %% Application Core
+    subgraph "AI Assistant Orchestration Engine"
+        CacheEngine --> Router{FastAPI Router}
+        Router -->|/api/v1/chat| ChatHandler["Chat & Prompt Engine<br/>• Persona Presets<br/>• Hyperparameter Tuning (Temp, Top_P)<br/>• SSE Streaming Generation"]
+        Router -->|/api/v1/chat/structured| StructuredEngine["Structured Output Engine<br/>• Pydantic Schema Guarantee<br/>• JSON Repair & Extraction Parser<br/>• AnalysisReport & MeetingNotes"]
+        Router -->|/api/v1/tools/*| ToolDispatcher["Tool Calling & Dispatcher (backend/app/tools/)<br/>• Safe AST Calculator<br/>• Weather Lookup<br/>• Real-time Web Search<br/>• UTC DateTime"]
+        Router -->|/api/v1/rag/*| RAGRouter["RAG Pipeline (backend/app/rag/)"]
+    end
+
+    %% Reliability & Model Tier
+    subgraph "Resilience & Fallback Engine (backend/app/core/reliability.py)"
+        ChatHandler --> RelManager["Fault Tolerance Manager<br/>• Exponential Backoff Retries + Jitter<br/>• Circuit Breaker (Closed/Open/Half-Open)"]
+        StructuredEngine --> RelManager
+        
+        RelManager --> FallbackRouter{Provider Fallback Hierarchy}
+        FallbackRouter -->|Primary: Online| GeminiProv["Gemini 1.5 Pro/Flash<br/>OpenAI GPT-4o"]
+        FallbackRouter -->|Failover: Local| VLLMProv["vLLM Engine (:8001)<br/>• Llama 3 8B / Mistral 7B<br/>• PagedAttention & Continuous Batching"]
+        FallbackRouter -->|Graceful Degradation| MockProv["Local Resilient Engine<br/>• Zero-Cost Offline Emulation<br/>• Deterministic Tool & JSON Mock"]
+    end
+
+    %% RAG Tier
+    subgraph "RAG Vector Architecture"
+        RAGRouter --> DocIngestion["Document Ingestion Pipeline (ingestion.py)<br/>• PDF / TXT / MD / CSV / JSON Parsers<br/>• Recursive Overlapping Text Chunker"]
+        DocIngestion --> EmbedEngine["Embedding Engine (embeddings.py)<br/>• Sentence-Transformers (all-MiniLM-L6-v2)<br/>• Hardware-Accelerated ONNX Runtime<br/>• Deterministic Unit Vector Fallback"]
+        EmbedEngine --> ChromaDB[("ChromaDB Vector Store (vector_store.py)<br/>• Persistent SQLite HNSW Index<br/>• Cosine Distance Metric<br/>• Metadata Filtering & Scoring")]
+        ChromaDB -.->|Context Enrichment| ChatHandler
+    end
+
+    %% Model Optimization Tier
+    subgraph "Model Optimization & Benchmarking (optimization/)"
+        EmbedEngine -.-> ONNXExport["ONNX Quantization & Export<br/>• FP32 PyTorch → ONNX Opset 14<br/>• Dynamic INT8 Quantization<br/>• 2.35x Latency Speedup, 3.8x Size Reduction"]
+    end
+
+    %% Cache Storage
+    subgraph "State & Infrastructure Tier"
+        CacheEngine -.-> RedisStore[("Redis Cache (:6379)")]
+    end
